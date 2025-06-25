@@ -101,8 +101,20 @@ Returns a list of matching campaigns for the given request parameters.
 - **In-memory cache** ensures all delivery requests are served with minimal latency.
 - **Hot reload** mechanism updates the in-memory cache from the database every minute, ensuring fresh data without restarts.
 - **Prometheus metrics** are exposed at `/metrics` for observability.
+#### Note
 
----
+Implementing hot-reload almost halved the test execution time:
+
+From:
+```
+PS C:\targeting-engine> go test ./internal/service
+ok      github.com/glitchdawg/campaign-targeting-engine/internal/service        0.421s
+```
+To:
+```
+PS C:\targeting-engine> go test ./internal/service
+ok      github.com/glitchdawg/campaign-targeting-engine/internal/service        0.286s
+```
 
 ## Development & Testing
 
