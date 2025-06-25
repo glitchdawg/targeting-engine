@@ -17,6 +17,7 @@ func TestGetCampaigns(t *testing.T) {
 		"spotify": {
 			CampaignID:     "spotify",
 			IncludeCountry: []string{"US", "Canada"},
+			IncludeOS:      []string{"Android", "iOS"}, // Only match Android/iOS
 		},
 		"duolingo": {
 			CampaignID:     "duolingo",
