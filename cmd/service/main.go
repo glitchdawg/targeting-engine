@@ -1,43 +1,55 @@
 package main
 
 import (
-    "log"
-    "net/http"
-    "github.com/glitchdawg/campaign-targeting-engine/internal/endpoint"
-    "github.com/glitchdawg/campaign-targeting-engine/internal/models"
-    "github.com/glitchdawg/campaign-targeting-engine/internal/service"
-    "github.com/glitchdawg/campaign-targeting-engine/internal/transport"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+
+	"github.com/glitchdawg/campaign-targeting-engine/internal/endpoint"
+	"github.com/glitchdawg/campaign-targeting-engine/internal/service"
+	"github.com/glitchdawg/campaign-targeting-engine/internal/storage"
+	"github.com/glitchdawg/campaign-targeting-engine/internal/transport"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-    // Example in-memory data
-    campaigns := map[string]models.Campaign{
-        "spotify":      {ID: "spotify", Name: "Spotify", Image: "https://somelink", CTA: "Download", Status: "ACTIVE"},
-        "duolingo":     {ID: "duolingo", Name: "Duolingo", Image: "https://somelink2", CTA: "Install", Status: "ACTIVE"},
-        "subwaysurfer": {ID: "subwaysurfer", Name: "Subway Surfer", Image: "https://somelink3", CTA: "Play", Status: "ACTIVE"},
-    }
-    rules := map[string]models.TargetingRule{
-        "spotify": {
-            CampaignID:     "spotify",
-            IncludeCountry: []string{"US", "Canada"},
-        },
-        "duolingo": {
-            CampaignID:  "duolingo",
-            IncludeOS:   []string{"Android", "iOS"},
-            ExcludeCountry: []string{"US"},
-        },
-        "subwaysurfer": {
-            CampaignID: "subwaysurfer",
-            IncludeOS:  []string{"Android"},
-            IncludeApp: []string{"com.gametion.ludokinggame"},
-        },
-    }
+	_ = godotenv.Load()
 
-    svc := service.NewDeliveryService(campaigns, rules)
-    ep := endpoint.MakeGetCampaignsEndpoint(svc)
-    handler := transport.NewHTTPHandler(ep)
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
 
-    http.Handle("/v1/delivery", handler)
-    log.Println("Listening on :8080")
-    log.Fatal(http.ListenAndServe(":8080", nil))
+	connStr := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		dbUser, dbPassword, dbHost, dbPort, dbName,
+	)
+
+	if connStr == "" {
+		log.Fatal("DB connection error")
+	}
+
+	store, err := storage.NewPostgresStore(connStr)
+	if err != nil {
+		log.Fatalf("failed to connect to db: %v", err)
+	}
+
+	campaigns, err := store.GetCampaigns()
+	if err != nil {
+		log.Fatalf("failed to load campaigns: %v", err)
+	}
+	rules, err := store.GetTargetingRules()
+	if err != nil {
+		log.Fatalf("failed to load targeting rules: %v", err)
+	}
+
+	svc := service.NewDeliveryService(campaigns, rules)
+	ep := endpoint.MakeGetCampaignsEndpoint(svc)
+	handler := transport.NewHTTPHandler(ep)
+
+	http.Handle("/v1/delivery", handler)
+	log.Println("Listening on :8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
