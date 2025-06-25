@@ -35,7 +35,7 @@ func TestGetCampaigns(t *testing.T) {
 		},
 	}
 
-	svc := NewDeliveryService(campaigns, rules)
+	svc := NewDeliveryServiceImpl(campaigns, rules)
 
 	tests := []struct {
 		name    string

@@ -10,16 +10,16 @@ type DeliveryService interface {
     GetCampaigns(app, country, os string) ([]models.Campaign, error)
 }
 
-type deliveryService struct {
+type DeliveryServiceImpl struct {
     Campaigns      map[string]models.Campaign
     TargetingRules map[string]models.TargetingRule
 }
 
-func NewDeliveryService(campaigns map[string]models.Campaign, rules map[string]models.TargetingRule) DeliveryService {
-    return &deliveryService{Campaigns: campaigns, TargetingRules: rules}
+func NewDeliveryServiceImpl(campaigns map[string]models.Campaign, rules map[string]models.TargetingRule) *DeliveryServiceImpl {
+    return &DeliveryServiceImpl{Campaigns: campaigns, TargetingRules: rules}
 }
 
-func (s *deliveryService) GetCampaigns(app, country, os string) ([]models.Campaign, error) {
+func (s *DeliveryServiceImpl) GetCampaigns(app, country, os string) ([]models.Campaign, error) {
     if app == "" {
         return nil, errors.New("missing app param")
     }
