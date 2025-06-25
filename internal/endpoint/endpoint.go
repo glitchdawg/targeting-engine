@@ -2,8 +2,8 @@ package endpoint
 
 import (
     "context"
-    "targeting-engine/internal/models"
-    "targeting-engine/internal/service"
+    "github.com/glitchdawg/campaign-targeting-engine/internal/models"
+    "github.com/glitchdawg/campaign-targeting-engine/internal/service"
 
     "github.com/go-kit/kit/endpoint"
 )

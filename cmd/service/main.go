@@ -3,10 +3,10 @@ package main
 import (
     "log"
     "net/http"
-    "targeting-engine/internal/endpoint"
-    "targeting-engine/internal/models"
-    "targeting-engine/internal/service"
-    "targeting-engine/internal/transport"
+    "github.com/glitchdawg/campaign-targeting-engine/internal/endpoint"
+    "github.com/glitchdawg/campaign-targeting-engine/internal/models"
+    "github.com/glitchdawg/campaign-targeting-engine/internal/service"
+    "github.com/glitchdawg/campaign-targeting-engine/internal/transport"
 )
 
 func main() {

@@ -3,7 +3,7 @@ package service
 import (
     "errors"
     "strings"
-    "targeting-engine/internal/models"
+    "github.com/glitchdawg/campaign-targeting-engine/internal/models"
 )
 
 type DeliveryService interface {
