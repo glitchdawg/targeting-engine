@@ -17,7 +17,7 @@ func TestGetCampaigns(t *testing.T) {
 		"spotify": {
 			CampaignID:     "spotify",
 			IncludeCountry: []string{"US", "Canada"},
-			IncludeOS:      []string{"Android", "iOS"}, // Only match Android/iOS
+			IncludeOS:      []string{"Android", "iOS"},
 		},
 		"duolingo": {
 			CampaignID:     "duolingo",
@@ -37,11 +37,19 @@ func TestGetCampaigns(t *testing.T) {
 
 	svc := NewDeliveryServiceImpl(campaigns, rules)
 
+	// Set up country-state mapping for validation
+	svc.SetCountryStates(map[string][]string{
+		"US":     {"California", "Texas", "New York"},
+		"Canada": {"Ontario", "Quebec"},
+		"India":  {"Maharashtra", "Karnataka"},
+	})
+
 	tests := []struct {
 		name    string
 		app     string
 		country string
 		os      string
+		state   string
 		wantIDs []string
 		wantErr string
 	}{
@@ -94,11 +102,59 @@ func TestGetCampaigns(t *testing.T) {
 			os:      "android",
 			wantIDs: []string{"spotify"},
 		},
+		{
+			name:    "state included but parent country excluded",
+			app:     "com.abc.xyz",
+			country: "Canada",
+			os:      "android",
+			state:   "Quebec",
+			wantErr: "parent country of included state is excluded",
+		},
+		{
+			name:    "state included and parent country included",
+			app:     "com.abc.xyz",
+			country: "US",
+			os:      "android",
+			state:   "California",
+			wantIDs: []string{"spotify"},
+		},
+		{
+			name:    "state not mapped to any country",
+			app:     "com.abc.xyz",
+			country: "Germany",
+			os:      "android",
+			state:   "Bavaria",
+			wantIDs: []string{"duolingo"},
+		},
+		{
+			name:    "state in India, parent country not in any rule",
+			app:     "com.abc.xyz",
+			country: "India",
+			os:      "android",
+			state:   "Maharashtra",
+			wantIDs: []string{"duolingo"},
+		},
+		{
+			name:    "state in US, but US is excluded for duolingo",
+			app:     "com.abc.xyz",
+			country: "US",
+			os:      "android",
+			state:   "Texas",
+			wantIDs: []string{"spotify"},
+		},
+		{
+			name:    "state in Canada, Canada not excluded for spotify",
+			app:     "com.abc.xyz",
+			country: "Canada",
+			os:      "android",
+			state:   "Ontario",
+			wantIDs: []string{"spotify"},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := svc.GetCampaigns(tt.app, tt.country, tt.os)
+			got, err := svc.GetCampaigns(tt.app, tt.country, tt.os, tt.state)
 			if tt.wantErr != "" {
 				if err == nil || err.Error() != tt.wantErr {
 					t.Errorf("expected error %q, got %v", tt.wantErr, err)

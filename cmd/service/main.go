@@ -27,16 +27,23 @@ func NewHotReloadDeliveryService(campaigns map[string]models.Campaign, rules map
     }
 }
 
-func (h *HotReloadDeliveryService) GetCampaigns(app, country, os string) ([]models.Campaign, error) {
+func (h *HotReloadDeliveryService) GetCampaigns(app, country, os,  state string) ([]models.Campaign, error) {
     h.mutex.RLock()
     defer h.mutex.RUnlock()
-    return h.svc.GetCampaigns(app, country, os)
+    return h.svc.GetCampaigns(app, country, os, state)
 }
 
 func (h *HotReloadDeliveryService) Reload(campaigns map[string]models.Campaign, rules map[string]models.TargetingRule) {
     h.mutex.Lock()
     defer h.mutex.Unlock()
     h.svc = service.NewDeliveryServiceImpl(campaigns, rules)
+}
+
+// SetCountryStates delegates to the underlying svc's SetCountryStates method.
+func (h *HotReloadDeliveryService) SetCountryStates(states map[string][]string) {
+    h.mutex.Lock()
+    defer h.mutex.Unlock()
+    h.svc.SetCountryStates(states)
 }
 
 func main() {
@@ -50,6 +57,7 @@ func main() {
 
     connStr := fmt.Sprintf(
         "postgres://%s:%s@%s:%s/%s?sslmode=disable",
+
         dbUser, dbPassword, dbHost, dbPort, dbName,
     )
 
@@ -70,6 +78,7 @@ func main() {
     if err != nil {
         log.Fatalf("failed to load targeting rules: %v", err)
     }
+    
 
     hotSvc := NewHotReloadDeliveryService(campaigns, rules)
     ep := endpoint.MakeGetCampaignsEndpoint(hotSvc)
@@ -89,7 +98,15 @@ func main() {
                 log.Printf("failed to reload targeting rules: %v", err)
                 continue
             }
+            countryStates, err := store.GetCountryStates()
+            if err != nil {
+                log.Printf("failed to reload country states: %v", err)
+                continue
+            }
             hotSvc.Reload(campaigns, rules)
+            if ds, ok:=interface{}(hotSvc.svc).(*service.DeliveryServiceImpl);ok{
+                ds.SetCountryStates(countryStates)
+            } 
             log.Println("Reloaded campaigns and rules from DB")
         }
     }()

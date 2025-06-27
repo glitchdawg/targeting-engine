@@ -3,6 +3,7 @@ type DeliveryRequest struct {
 	App     string `json:"app"`
 	Country string `json:"country"`
 	OS      string `json:"os"`
+	State  string `json:"state"`
 }
 
 type DeliveryResponse struct {

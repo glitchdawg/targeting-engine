@@ -49,18 +49,28 @@ func main() {
         include_os TEXT,
         exclude_os TEXT,
         include_app TEXT,
-        exclude_app TEXT
+        exclude_app TEXT,
+        include_state TEXT,
+        exclude_state TEXT
+    );
+    CREATE TABLE IF NOT EXISTS country_states (
+        country TEXT PRIMARY KEY,
+        states TEXT
     );
     DELETE FROM campaigns;
     DELETE FROM targeting_rules;
+    DELETE FROM country_states;
     INSERT INTO campaigns (id, name, img, cta, status) VALUES
         ('spotify', 'Spotify', 'https://somelink', 'Download', 'ACTIVE'),
         ('duolingo', 'Duolingo', 'https://somelink2', 'Install', 'ACTIVE'),
         ('subwaysurfer', 'Subway Surfer', 'https://somelink3', 'Play', 'ACTIVE');
-    INSERT INTO targeting_rules (campaign_id, include_country, exclude_country, include_os, exclude_os, include_app, exclude_app) VALUES
-        ('spotify', 'US,Canada', NULL, 'Android,iOS', NULL, NULL, NULL),
-        ('duolingo', NULL, 'US', 'Android,iOS', NULL, NULL, NULL),
-        ('subwaysurfer', NULL, NULL, 'Android', NULL, 'com.gametion.ludokinggame', NULL);
+    INSERT INTO targeting_rules (campaign_id, include_country, exclude_country, include_os, exclude_os, include_app, exclude_app, include_state, exclude_state) VALUES
+        ('spotify', 'US,Canada', NULL, 'Android,iOS', NULL, NULL, NULL, NULL, NULL),
+        ('duolingo', NULL, 'US', 'Android,iOS', NULL, NULL, NULL, NULL, NULL),
+        ('subwaysurfer', NULL, NULL, 'Android', NULL, 'com.gametion.ludokinggame', NULL, NULL, NULL);
+    INSERT INTO country_states (country, states) VALUES
+        ('US', 'California,Texas,New York,Florida'),
+        ('Canada', 'Ontario,Quebec,British Columbia,Alberta');
     `)
 	if err != nil {
 		log.Fatal(err)

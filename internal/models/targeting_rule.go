@@ -10,6 +10,8 @@ type TargetingRule struct {
 	ExcludeOS      []string `json:"exclude_os,omitempty"`
 	IncludeApp     []string `json:"include_app,omitempty"`
 	ExcludeApp     []string `json:"exclude_app,omitempty"`
+	IncludeState   []string `json:"include_state,omitempty"`
+	ExcludeState   []string `json:"exclude_state,omitempty"`
 }
 
 type TargetingEngine struct {

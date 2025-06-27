@@ -20,6 +20,8 @@ func NewPostgresStore(connStr string) (*PostgresStore, error) {
 	return &PostgresStore{DB: db}, nil
 }
 
+
+
 func (s *PostgresStore) GetCampaigns() (map[string]models.Campaign, error) {
 	rows, err := s.DB.Query(`SELECT id, name, img, cta, status FROM campaigns`)
 	if err != nil {
@@ -38,9 +40,34 @@ func (s *PostgresStore) GetCampaigns() (map[string]models.Campaign, error) {
 	return campaigns, nil
 }
 
+func (s *PostgresStore) GetCountryStates()(map[string][]string,error){
+	
+	row, err:=s.DB.Query(`SELECT country, states FROM country_states`)
+	if err != nil {
+		return nil, err
+	}
+	defer row.Close()
+	countryStates := make(map[string][]string)
+	for row.Next() {
+		var country, states string
+		if err:=row.Scan(&country, &states); err != nil {
+			return nil, err
+		}
+		stateList:=[]string{}
+		if states!=""{
+			for _, state:= range strings.Split(states,","){
+				stateList=append(stateList, strings.TrimSpace(state))
+			}
+		}
+		countryStates[country]=stateList
+	}
+	return countryStates, nil
+
+}
+
 func (s *PostgresStore) GetTargetingRules() (map[string]models.TargetingRule, error) {
 	rows, err := s.DB.Query(`
-        SELECT campaign_id, include_country, exclude_country, include_os, exclude_os, include_app, exclude_app
+        SELECT campaign_id, include_country, exclude_country, include_os, exclude_os, include_app, exclude_app, include_state, exclude_state,
         FROM targeting_rules`)
 	if err != nil {
 		return nil, err
@@ -50,9 +77,9 @@ func (s *PostgresStore) GetTargetingRules() (map[string]models.TargetingRule, er
 	rules := make(map[string]models.TargetingRule)
 	for rows.Next() {
 		var r models.TargetingRule
-		var includeCountry, excludeCountry, includeOS, excludeOS, includeApp, excludeApp sql.NullString
+		var includeCountry, excludeCountry, includeOS, excludeOS, includeApp, excludeApp, includeState, excludeState sql.NullString
 		if err := rows.Scan(
-			&r.CampaignID, &includeCountry, &excludeCountry, &includeOS, &excludeOS, &includeApp, &excludeApp,
+			&r.CampaignID, &includeCountry, &excludeCountry, &includeOS, &excludeOS, &includeApp, &excludeApp, &includeState, &excludeState,
 		); err != nil {
 			return nil, err
 		}
@@ -62,6 +89,8 @@ func (s *PostgresStore) GetTargetingRules() (map[string]models.TargetingRule, er
 		r.ExcludeOS = splitNullString(excludeOS)
 		r.IncludeApp = splitNullString(includeApp)
 		r.ExcludeApp = splitNullString(excludeApp)
+		r.IncludeState = splitNullString(includeState)
+		r.ExcludeState = splitNullString(excludeState)
 		rules[r.CampaignID] = r
 	}
 	return rules, nil
